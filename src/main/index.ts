@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -49,6 +50,9 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  //for double check new version
+  console.log('**************v1.11**************:', new Date())
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -141,7 +145,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('print-receipt', async (_event, saleData) => {
-    const { id, items, total, time } = saleData
+    const { id, items = [], total, time } = saleData
+
+    const storeName = process.env.STORE_NAME || 'My Awesome Shop'
+    const storeAddress = process.env.STORE_ADDRESS || 'Portland, OR'
+    const storePhone = process.env.STORE_PHONE || ''
 
     // GET HTML Receipt
     // 58mm paper size
@@ -158,7 +166,9 @@ app.whenReady().then(() => {
     </head>
     <body>
       <div class="center">
-        <h3>MY AWESOME STORE</h3>
+        <h3 class="title">${storeName}</h3>
+        <div>${storeAddress}</div>
+        <div>${storePhone}</div>
         <p>Order #${id}</p>
         <p>${time}</p>
       </div>
@@ -190,7 +200,7 @@ app.whenReady().then(() => {
   `
 
     const printWindow = new BrowserWindow({
-      show: false,
+      show: true,
       width: 300,
       height: 400
     })
@@ -199,7 +209,7 @@ app.whenReady().then(() => {
 
     return new Promise((resolve) => {
       printWindow.webContents.on('did-finish-load', () => {
-        printWindow.webContents.print({ silent: false }, (success, errorType) => {
+        printWindow.webContents.print({ silent: false, deviceName: '' }, (success, errorType) => {
           if (!success) console.error('Print Error', errorType)
           printWindow.close()
           resolve({ success })

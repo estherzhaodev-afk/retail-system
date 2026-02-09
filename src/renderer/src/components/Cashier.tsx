@@ -40,6 +40,7 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
         if (shouldPrint) {
           const printData = {
             id: Date.now().toString().slice(-6),
+            items: cart,
             total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
             time: new Date().toLocaleString('en-US')
           }
