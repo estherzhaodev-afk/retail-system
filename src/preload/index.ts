@@ -10,7 +10,8 @@ const api = {
   createSale: (carItems) => ipcRenderer.invoke('create-sale', carItems),
   getSalesAnalytics: () => ipcRenderer.invoke('get-sale-analytics'),
   getAllSales: () => ipcRenderer.invoke('get-all-sales'),
-  printReceipt: (data) => ipcRenderer.invoke('print-receipt', data)
+  printReceipt: (data) => ipcRenderer.invoke('print-receipt', data),
+  saveBarcode: (data) => ipcRenderer.invoke('save-barcode-image', data)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
