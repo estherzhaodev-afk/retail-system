@@ -42,5 +42,6 @@ interface Window {
     updateProduct: (product: Product) => Promise<{ success: boolean; error?: string }>
     deleteProduct: (id: number) => Promise<{ success: boolean; error?: string }>
     getAllProducts: () => Promise<{ success: boolean; data: Product[]; error?: string }>
+    saveBarcode: (product: Omit<Product, 'id'>) => Promise<{ success: boolean; error?: string }>
   }
 }

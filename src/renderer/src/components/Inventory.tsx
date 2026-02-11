@@ -48,22 +48,49 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
 
   const handleSubmit = async (e): Promise<void> => {
     e.preventDefault()
-    const priceInCents = Math.round(parseFloat(price) * 100)
-    const productData = { barcode, name, price: priceInCents, stock: parseInt(stock), detail }
 
-    let res
-    if (editingId) {
-      res = await window.api.updateProduct({ ...productData, id: editingId })
-    } else {
-      res = await window.api.addProduct(productData)
+    let finalBarcode = barcode
+    if (!finalBarcode || finalBarcode.trim() === '') {
+      finalBarcode = `SN${Date.now().toString().slice(-10)}`
+      setBarcode(finalBarcode)
     }
 
-    if (res.success) {
-      setMessage(editingId ? 'Updated!' : 'Added!')
-      handleCancelEdit()
-      onRefresh()
-    } else {
-      setMessage('Error: ' + res.error)
+    const priceInCents = Math.round(parseFloat(price) * 100)
+    const productData = {
+      barcode: finalBarcode,
+      name,
+      price: priceInCents,
+      stock: parseInt(stock),
+      detail
+    }
+
+    try {
+      // 2. 只有在新增产品时才存图 (或者根据需要编辑时也存)
+      if (!editingId) {
+        // 弹出窗口咨询路径并保存图片
+        const fileRes = await window.api.saveBarcode(productData)
+
+        // 如果用户取消保存图片，则不继续存数据库
+        if (!fileRes || !fileRes.success) return
+      }
+
+      let res
+      if (editingId) {
+        res = await window.api.updateProduct({ ...productData, id: editingId })
+      } else {
+        res = await window.api.addProduct(productData)
+      }
+
+      if (res.success) {
+        setMessage(editingId ? 'Updated!' : 'Added!')
+        handleCancelEdit()
+        onRefresh()
+      } else {
+        setMessage('Error: ' + res.error)
+      }
+    } catch (err) {
+      console.error('Save failed:', err)
+      setMessage('Save failed.')
     }
   }
 
@@ -138,6 +165,7 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
             value={detail}
             onChange={(e) => setDetail(e.target.value)}
           />
+
           <button
             type="submit"
             style={{
