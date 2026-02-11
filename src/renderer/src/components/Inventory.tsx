@@ -65,12 +65,9 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
     }
 
     try {
-      // 2. 只有在新增产品时才存图 (或者根据需要编辑时也存)
       if (!editingId) {
-        // 弹出窗口咨询路径并保存图片
         const fileRes = await window.api.saveBarcode(productData)
 
-        // 如果用户取消保存图片，则不继续存数据库
         if (!fileRes || !fileRes.success) return
       }
 

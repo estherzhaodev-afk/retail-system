@@ -238,9 +238,8 @@ app.whenReady().then(() => {
     const downloadPath =
       process.env.BARCODE_ADDRESS || path.join(app.getPath('downloads'), 'barcodes')
 
-    // 1. 弹出保存对话框
     const { filePath } = await dialog.showSaveDialog({
-      title: '保存条形码标签',
+      title: 'saveBarcode',
       defaultPath: path.join(downloadPath, `barcode-${data.name}.png`),
       filters: [{ name: 'Images', extensions: ['png'] }]
     })
@@ -248,15 +247,13 @@ app.whenReady().then(() => {
     if (!filePath) return { success: false, reason: '用户取消' }
 
     try {
-      // 主 canvas（最终图片）
       const canvas = createCanvas(300, 150)
       const ctx = canvas.getContext('2d')
 
-      // 背景
       ctx.fillStyle = 'white'
       ctx.fillRect(0, 0, 300, 150)
 
-      // ===== 1️⃣ 条形码 canvas =====
+      // ===== canvas Barcode =====
       const barcodeCanvas = createCanvas(250, 80)
       JsBarcode(barcodeCanvas, data.barcode, {
         format: 'CODE128',
@@ -267,24 +264,17 @@ app.whenReady().then(() => {
         margin: 0
       })
 
-      // 把条形码贴到主 canvas
       ctx.drawImage(barcodeCanvas, (300 - barcodeCanvas.width) / 2, 40)
 
-      // ===== 2️⃣ 文字 =====
       ctx.fillStyle = 'black'
-      //ctx.textAlign = 'center'
       ctx.font = 'bold 20px Arial'
 
-      // 名字（左）
       ctx.textAlign = 'left'
       drawFitText(ctx, data.name, 10, 35, 180)
 
-      // 价格（右，固定不缩）
       ctx.textAlign = 'right'
-      //ctx.font = 'bold 18px Arial'
       ctx.fillText(`$${(data.price / 100).toFixed(2)}`, 290, 35)
 
-      // 3. 写入文件
       const buffer = canvas.toBuffer('image/png')
       fs.writeFileSync(filePath, buffer)
 
