@@ -149,7 +149,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('print-receipt', async (_event, saleData) => {
-    const { id, items = [], total, time } = saleData
+    const { id, items = [], discount, total, time } = saleData
 
     const storeName = process.env.STORE_NAME || 'My Awesome Shop'
     const storeAddress = process.env.STORE_ADDRESS || 'Portland, OR'
@@ -161,7 +161,7 @@ app.whenReady().then(() => {
     <html>
     <head>
       <style>
-        body { font-family: 'Courier New', monospace; font-size: 12px; margin: 0; padding: 10px; width: 100%; }
+        body { font-family: 'Courier New', monospace; font-size: 12px; margin: 0; padding: 10px; width: 90%; }
         .center { text-align: center; }
         .line { border-bottom: 1px dashed #000; margin: 5px 0; }
         .item { display: flex; justify-content: space-between; margin-bottom: 3px; }
@@ -188,8 +188,21 @@ app.whenReady().then(() => {
       `
         )
         .join('')}
-
+      
       <div class="line"></div>
+      
+      <div class="item">
+  ${
+    discount
+      ? `
+    <span>Discount: ${discount.type === 'percent' ? discount.value + '% off' : '-$' + discount.value}</span>
+    <div class="line"></div>
+  `
+      : ''
+  }
+</div>
+
+
       
       <div class="total">
         TOTAL: $${(total / 100).toFixed(2)}

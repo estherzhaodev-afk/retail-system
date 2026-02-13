@@ -32,7 +32,10 @@ interface SaleRow {
 
 interface Window {
   api: {
-    createSale: (cart: CartItem[]) => Promise<{ success: boolean; error?: string }>
+    createSale: (
+      cart: CartItem[],
+      discount?: { type: 'percent' | 'fixed'; value: number } | null
+    ) => Promise<{ success: boolean; error?: string }>
     getSalesAnalytics: () => Promise<{ success: boolean; data; error?: string }>
     getAllSales: () => Promise<{ success: boolean; data; error?: string }>
 

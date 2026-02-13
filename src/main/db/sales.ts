@@ -5,6 +5,7 @@ export interface SaleRow {
   total_price: number
   items_json: string
   created_at: string
+  discount?: { type: 'percent' | 'fixed'; value: number }
 }
 
 export interface AnalyticsResult {
@@ -16,22 +17,41 @@ export interface AnalyticsResult {
 /**
  * reduce inventory && record sale
  */
-export const createSale = db.transaction((cartItems: CartItem[]) => {
-  //total
-  const total = calculateTotal(cartItems)
+export const createSale = db.transaction(
+  (cartItems: CartItem[], discount?: { type: 'percent' | 'fixed'; value: number }) => {
+    //total
+    const total = calculateTotal(cartItems)
 
-  //sale record
-  const insertSale = db.prepare('INSERT INTO sales( total_price,items_json ) VALUES(?,?)')
-  insertSale.run(total, JSON.stringify(cartItems))
-  //Update invertory
-  const updateStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?')
+    let finalTotal = total
 
-  for (const item of cartItems) {
-    updateStock.run(item.quantity, item.id)
+    if (discount) {
+      if (discount.type === 'percent') {
+        finalTotal = total * (1 - discount.value / 100)
+      } else {
+        finalTotal = total - discount.value * 100
+      }
+    }
+
+    //sale record
+    const insertSale = db.prepare(
+      'INSERT INTO sales( total_price,items_json,discount_value, discount_type ) VALUES(?,?,?,?)'
+    )
+    insertSale.run(
+      finalTotal,
+      JSON.stringify(cartItems),
+      discount?.type ?? null,
+      discount?.value ?? null
+    )
+    //Update invertory
+    const updateStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?')
+
+    for (const item of cartItems) {
+      updateStock.run(item.quantity, item.id)
+    }
+
+    return { success: true }
   }
-
-  return { success: true }
-})
+)
 
 /**
  * Calculate total

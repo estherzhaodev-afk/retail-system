@@ -65,7 +65,7 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
     }
 
     try {
-      if (!editingId) {
+      if (!editingId && (!barcode || barcode.trim() === '')) {
         const fileRes = await window.api.saveBarcode(productData)
 
         if (!fileRes || !fileRes.success) return

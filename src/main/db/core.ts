@@ -45,6 +45,8 @@ export function initDB(): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       total_price INTEGER NOT NULL,
       items_json TEXT NOT NULL,
+      discount_value REAL DEFAULT 0,
+      discount_type TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `)

@@ -10,6 +10,10 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
   const [cart, setCart] = useState<CartItem[]>([])
   const [lastScanned, setLastScanned] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [discount, setDiscount] = useState<{
+    type: 'percent' | 'fixed'
+    value: number
+  } | null>(null)
 
   const addToCart = (product: Product): void => {
     setCart((prev) => {
@@ -23,6 +27,20 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
     })
   }
 
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  let finalTotal = total
+  let discountValue = 0
+
+  if (discount) {
+    if (discount.type === 'percent') {
+      discountValue = total * (discount.value / 100)
+    } else {
+      discountValue = discount.value * 100
+    }
+  }
+
+  finalTotal = Math.max(0, total - discountValue)
+
   const removeFromCart = (id: number): void => {
     setCart((prev) => prev.filter((item) => item.id !== id))
   }
@@ -30,10 +48,10 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
   const handleCheckOut = async (): Promise<void> => {
     if (cart.length === 0) return
 
-    if (!confirm(`Confirm total payment: $${(total / 100).toFixed(2)}?`)) return
+    if (!confirm(`Confirm total payment: $${(finalTotal / 100).toFixed(2)}?`)) return
 
     try {
-      const res = await window.api.createSale(cart)
+      const res = await window.api.createSale(cart, discount)
       if (res.success) {
         const shouldPrint = confirm('Transaction Saved! ✅\n\nDo you want to print the receipt?')
 
@@ -41,7 +59,8 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
           const printData = {
             id: Date.now().toString().slice(-6),
             items: cart,
-            total: cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
+            discount: discount,
+            total: finalTotal,
             time: new Date().toLocaleString('en-US')
           }
 
@@ -105,8 +124,6 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [products])
-
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
@@ -226,6 +243,37 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
             color: '#333'
           }}
         >
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="number"
+              placeholder="Discount value"
+              onChange={(e) =>
+                setDiscount({
+                  type: 'fixed',
+                  value: Number(e.target.value)
+                })
+              }
+              style={{
+                width: '100%',
+                padding: '8px',
+                marginBottom: '5px'
+              }}
+            />
+
+            <select
+              onChange={(e) =>
+                setDiscount((prev) => ({
+                  type: e.target.value as 'percent' | 'fixed',
+                  value: prev?.value || 0
+                }))
+              }
+              style={{ width: '100%', padding: '8px' }}
+            >
+              <option value="fixed">Fixed $</option>
+              <option value="percent">Percent %</option>
+            </select>
+          </div>
+
           <div
             style={{
               display: 'flex',
@@ -236,7 +284,7 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
             }}
           >
             <span style={{ color: 'black' }}>Total:</span>
-            <span style={{ color: 'black' }}>${(total / 100).toFixed(2)}</span>
+            <span style={{ color: 'black' }}>${(finalTotal / 100).toFixed(2)}</span>
           </div>
           <button
             style={{
