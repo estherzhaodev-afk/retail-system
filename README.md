@@ -20,6 +20,10 @@ Implemented "Silent Printing" for instant receipt generation.
 
 Built a responsive "Clean Fit" UI for fast cashier operations.
 
+Automatic Barcode Generation: Automatically generates CODE128 barcodes for products without existing tags.
+
+Label Printing: Renders custom 1"x0.5" product labels using HTML5 Canvas and exports them to local file system for thermal printing.
+
 ### Install
 
 ```bash
