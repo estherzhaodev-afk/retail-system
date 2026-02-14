@@ -148,6 +148,29 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('getProductsPaginated', async (_event, data) => {
+    const { page, pageSize, searchItem } = data
+
+    try {
+      const allProducts = getAllProducts()
+
+      const filtered = allProducts.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchItem.toLowerCase()) || p.barcode.includes(searchItem)
+      )
+
+      const total = filtered.length
+      const start = (page - 1) * pageSize
+      const end = start + pageSize
+      const products = filtered.slice(start, end)
+
+      return { success: true, products, total }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      return { success: false, error: message }
+    }
+  })
+
   ipcMain.handle('print-receipt', async (_event, saleData) => {
     const { id, items = [], discount, total, time } = saleData
 

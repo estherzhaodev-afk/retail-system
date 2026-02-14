@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Product } from '../types'
 
 interface InventoryProps {
@@ -15,6 +15,10 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
   const [editingId, setEditingId] = useState<number | null>(null)
   const [message, setMessage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [localProducts, setLocalProducts] = useState<Product[]>([])
 
   const nameInputRef = useRef<HTMLInputElement>(null)
 
@@ -46,7 +50,7 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
     }
   }
 
-  const handleSubmit = async (e): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
 
     let finalBarcode = barcode
@@ -108,13 +112,36 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
     }
   }
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products
-    const lowerTerm = searchTerm.toLowerCase()
-    return products.filter(
-      (p) => p.name.toLowerCase().includes(lowerTerm) || p.barcode.includes(lowerTerm)
-    )
-  }, [products, searchTerm])
+  useEffect(() => {
+    const load = async (): Promise<void> => {
+      try {
+        const res = await window.api.getProductsPaginated({
+          page,
+          pageSize,
+          searchItem: searchTerm
+        })
+
+        if (res.success) {
+          setLocalProducts(
+            (res.products ?? []).map((p) => ({
+              ...p,
+              detail: p.detail ?? ''
+            }))
+          )
+
+          setTotal(res.total || 0)
+        } else {
+          console.error('Failed to load products:', res.error)
+        }
+      } catch (err) {
+        console.error('Load error:', err)
+      }
+    }
+
+    load()
+  }, [page, pageSize, searchTerm])
+
+  const totalPages = Math.ceil(total / pageSize)
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px', height: '100%' }}>
@@ -193,12 +220,15 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
             marginBottom: '10px'
           }}
         >
-          <h2>Inventory Total: {products.length}</h2>
+          <h2>Inventory Total: {total}</h2>
           <input
             type="text"
             placeholder="🔍 Search name or barcode..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setPage(1)
+            }}
             style={{
               padding: '8px',
               width: '250px',
@@ -217,7 +247,7 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.map((p) => (
+            {localProducts.map((p) => (
               <tr key={p.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td>
                   {p.name} <br />
@@ -270,6 +300,30 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
             ))}
           </tbody>
         </table>
+        <div
+          style={{
+            marginTop: '15px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center',
+            paddingBottom: '15px'
+          }}
+        >
+          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            Prev
+          </button>
+
+          <span>
+            Page {page} / {totalPages || 1}
+          </span>
+
+          <button
+            disabled={page === totalPages || totalPages === 0}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   )

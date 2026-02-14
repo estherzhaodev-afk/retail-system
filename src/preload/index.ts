@@ -11,7 +11,9 @@ const api = {
   getSalesAnalytics: () => ipcRenderer.invoke('get-sale-analytics'),
   getAllSales: () => ipcRenderer.invoke('get-all-sales'),
   printReceipt: (data) => ipcRenderer.invoke('print-receipt', data),
-  saveBarcode: (data) => ipcRenderer.invoke('save-barcode-image', data)
+  saveBarcode: (data) => ipcRenderer.invoke('save-barcode-image', data),
+  getProductsPaginated: (params: { page: number; pageSize: number; searchItem: string }) =>
+    ipcRenderer.invoke('getProductsPaginated', params)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

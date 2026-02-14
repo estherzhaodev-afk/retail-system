@@ -16,6 +16,7 @@ export function addProduct(product: Product): number | bigint {
 
 /**
  * Retrieves all products from the database, newest first.
+ *
  */
 export function getAllProducts(): Product[] {
   // .all() returns an array of objects
@@ -29,7 +30,7 @@ export function getAllProducts(): Product[] {
 export function deleteProduct(id: number): number {
   const stmt = db.prepare('DELETE FROM products WHERE id = ?')
   const info = stmt.run(id)
-  return info
+  return info.change
 }
 
 /**
@@ -43,4 +44,53 @@ export function updateProduct(product: Product): number {
   `)
   const info = stmt.run(product)
   return info.changes
+}
+
+/**
+ * Pagination
+ * @param page
+ * @param pageSize
+ * @param searchTerm
+ * @returns
+ */
+export function getProductsPaginated(
+  page: number,
+  pageSize: number,
+  searchTerm: string = ''
+): Product[] {
+  const offset = (page - 1) * pageSize
+
+  if (searchTerm.trim() === '') {
+    const stmt = db.prepare(`
+      SELECT * FROM products
+      ORDER BY id DESC
+      LIMIT ? OFFSET ?
+    `)
+    return stmt.all(pageSize, offset) as Product[]
+  }
+
+  const stmt = db.prepare(`
+    SELECT * FROM products
+    WHERE name LIKE ? OR barcode LIKE ?
+    ORDER BY id DESC
+    LIMIT ? OFFSET ?
+  `)
+
+  const keyword = `%${searchTerm}%`
+  return stmt.all(keyword, keyword, pageSize, offset) as Product[]
+}
+
+export function getProductsCount(searchTerm: string = ''): number {
+  if (searchTerm.trim() === '') {
+    const stmt = db.prepare(`SELECT COUNT(*) as count FROM products`)
+    return (stmt.get() as { count: number }).count
+  }
+
+  const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM products
+    WHERE name LIKE ? OR barcode LIKE ?
+  `)
+
+  const keyword = `%${searchTerm}%`
+  return (stmt.get(keyword, keyword) as { count: number }).count
 }

@@ -46,5 +46,16 @@ interface Window {
     deleteProduct: (id: number) => Promise<{ success: boolean; error?: string }>
     getAllProducts: () => Promise<{ success: boolean; data: Product[]; error?: string }>
     saveBarcode: (product: Omit<Product, 'id'>) => Promise<{ success: boolean; error?: string }>
+
+    getProductsPaginated: (params: {
+      page: number
+      pageSize: number
+      searchItem: string
+    }) => Promise<{
+      success: boolean
+      products?: Product[]
+      total?: number
+      error?: string
+    }>
   }
 }

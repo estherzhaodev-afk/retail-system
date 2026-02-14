@@ -7,7 +7,7 @@ export interface Product {
   name: string
   price: number
   stock: number
-  detail: string
+  detail?: string
   barcode: string
 }
 
