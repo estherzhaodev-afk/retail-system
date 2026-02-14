@@ -61,6 +61,26 @@ export default function Dashboard(): React.JSX.Element {
     document.body.removeChild(link)
   }
 
+  const handleReprint = async (sale: Sale): Promise<void> => {
+    const items = JSON.parse(sale.items_json)
+    const saleData = {
+      id: sale.id.toString(),
+      items: items.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price
+      })),
+      discount: sale.discount || undefined,
+      total: sale.total_price,
+      time: new Date(sale.created_at.replace(' ', 'T') + 'Z').toLocaleString()
+    }
+
+    const res = await window.api.printReceipt(saleData)
+    if (!res.success) {
+      alert('Print failed!')
+    }
+  }
+
   if (!data) return <div style={{ padding: '20px' }}>Loading...</div>
 
   return (
@@ -187,8 +207,36 @@ export default function Dashboard(): React.JSX.Element {
                       </span>
                     ))}
                   </td>
-                  <td style={{ padding: '15px', fontWeight: 'bold' }}>
-                    ${(sale.total_price / 100).toFixed(2)}
+                  <td
+                    style={{
+                      padding: '15px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <span>${(sale.total_price / 100).toFixed(2)}</span>
+                      <button
+                        style={{
+                          marginLeft: '10px',
+                          padding: '5px 10px',
+                          background: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.8em'
+                        }}
+                        onClick={() => handleReprint(sale)}
+                      >
+                        Reprint
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

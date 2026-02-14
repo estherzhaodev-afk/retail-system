@@ -14,6 +14,10 @@ export interface CartItem extends Product {
 export interface Sale {
   id: number
   total_price: number
+  discount?: {
+    type: 'percent' | 'fixed'
+    value: number
+  }
   items_json: string
   created_at: string
 }

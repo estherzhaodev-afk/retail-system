@@ -19,10 +19,13 @@ interface Product {
 interface PrintData {
   id: string
   items: CartItem[]
+  discount?: {
+    type: 'percent' | 'fixed'
+    value: number
+  }
   total: number
   time: string
 }
-
 interface SaleRow {
   id: number
   total_number: number
