@@ -1,5 +1,5 @@
-import { db, Product } from './core'
-
+import { db } from './core'
+import { Product } from '../../common/types'
 /**
  * Inserts a new product into the database.
  * Returns the ID of the new row.
@@ -30,7 +30,7 @@ export function getAllProducts(): Product[] {
 export function deleteProduct(id: number): number {
   const stmt = db.prepare('DELETE FROM products WHERE id = ?')
   const info = stmt.run(id)
-  return info.change
+  return info.changes
 }
 
 /**

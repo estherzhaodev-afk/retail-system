@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AnalyticsData, Sale } from '@renderer/types'
+import { AnalyticsData, Sale } from '../../../common/types'
 
 export default function Dashboard(): React.JSX.Element {
   const [data, setData] = useState<AnalyticsData | null>(null)
@@ -64,7 +64,7 @@ export default function Dashboard(): React.JSX.Element {
   const handleReprint = async (sale: Sale): Promise<void> => {
     const items = JSON.parse(sale.items_json)
     const saleData = {
-      id: sale.id.toString(),
+      id: sale.id,
       items: items.map((i) => ({
         name: i.name,
         quantity: i.quantity,
@@ -79,6 +79,30 @@ export default function Dashboard(): React.JSX.Element {
     if (!res.success) {
       alert('Print failed!')
     }
+  }
+
+  const handleVoid = async (saleId: number): Promise<void> => {
+    if (!confirm('Are you sure you want to VOID Order #${saleId}')) {
+      return
+    }
+
+    const res = await window.api.voidSale(saleId)
+    if (res.success) {
+      alert('Order Voided Successfully!')
+    } else {
+      alert('Failed:' + res.error)
+    }
+
+    if (!data) return
+
+    const voidedSale = data.recentSales.find((s) => s.id === saleId)
+    if (!voidedSale) return
+
+    setData({
+      todayRevenue: data.todayRevenue - voidedSale.total_price,
+      todayOrders: data.todayOrders - 1,
+      recentSales: data.recentSales.map((s) => (s.id === saleId ? { ...s, status: 'VOID' } : s))
+    })
   }
 
   if (!data) return <div style={{ padding: '20px' }}>Loading...</div>
@@ -185,8 +209,15 @@ export default function Dashboard(): React.JSX.Element {
                 hour: 'numeric',
                 minute: 'numeric'
               })
+              const isVoid = sale.status === 'VOID'
               return (
-                <tr key={sale.id} style={{ borderBottom: '1px solid #eee' }}>
+                <tr
+                  key={sale.id}
+                  style={{
+                    borderBottom: '1px solid #eee',
+                    textDecoration: isVoid ? 'line-through' : 'none'
+                  }}
+                >
                   <td style={{ padding: '15px', color: '#999' }}>#{sale.id}</td>
                   <td style={{ padding: '15px' }}>{time}</td>
 
@@ -236,6 +267,14 @@ export default function Dashboard(): React.JSX.Element {
                       >
                         Reprint
                       </button>
+                      {sale.status !== 'VOID' && (
+                        <button
+                          className="text-red-600 hover:underline font-medium"
+                          onClick={() => handleVoid(sale.id)}
+                        >
+                          Void
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

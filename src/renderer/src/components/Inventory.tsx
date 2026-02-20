@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Product } from '../types'
+import { Product } from '../../../common/types'
 
 interface InventoryProps {
   products: Product[]
@@ -28,7 +28,7 @@ export default function Inventory({ products, onRefresh }: InventoryProps): Reac
     setName(product.name)
     setPrice((product.price / 100).toFixed(2))
     setStock(product.stock.toString())
-    setDetail(product.detail)
+    setDetail(product.detail || '')
   }
 
   const handleCancelEdit = (): void => {

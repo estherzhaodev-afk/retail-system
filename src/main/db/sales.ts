@@ -1,18 +1,5 @@
-import { db, CartItem } from './core'
-
-export interface SaleRow {
-  id: number
-  total_price: number
-  items_json: string
-  created_at: string
-  discount?: { type: 'percent' | 'fixed'; value: number }
-}
-
-export interface AnalyticsResult {
-  todayRevenue: number
-  todayOrders: number
-  recentSales: SaleRow[]
-}
+import { db } from './core'
+import { CartItem, Sale, AnalyticsResult } from '../../common/types'
 
 /**
  * reduce inventory && record sale
@@ -34,13 +21,14 @@ export const createSale = db.transaction(
 
     //sale record
     const insertSale = db.prepare(
-      'INSERT INTO sales( total_price,items_json,discount_value, discount_type ) VALUES(?,?,?,?)'
+      'INSERT INTO sales( total_price,items_json,discount_value, discount_type,status) VALUES(?,?,?,?,?)'
     )
-    insertSale.run(
+    const res = insertSale.run(
       finalTotal,
       JSON.stringify(cartItems),
+      discount?.value ?? null,
       discount?.type ?? null,
-      discount?.value ?? null
+      'COMPLETED'
     )
     //Update invertory
     const updateStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?')
@@ -49,7 +37,7 @@ export const createSale = db.transaction(
       updateStock.run(item.quantity, item.id)
     }
 
-    return { success: true }
+    return { success: true, saleId: res.id }
   }
 )
 
@@ -87,6 +75,7 @@ function fetchTodayStats(): {
       COUNT(*) as totalOrders 
     FROM sales 
     WHERE date(created_at, 'localtime') = date('now', 'localtime')
+    AND status != 'VOID'
   `)
 
   const result = stmt.get() as { totalRevenue: number; totalOrders: number }
@@ -101,7 +90,7 @@ function fetchTodayStats(): {
  * Renctly 10
  * @param limit
  */
-function fetchRecentSales(limit: number): SaleRow[] {
+function fetchRecentSales(limit: number): Sale[] {
   const stmt = db.prepare(`
     SELECT * FROM sales 
     ORDER BY id DESC 
@@ -113,7 +102,32 @@ function fetchRecentSales(limit: number): SaleRow[] {
 /**
  * Get All Sale
  */
-export function getAllSales(): SaleRow[] {
+export function getAllSales(): Sale[] {
   const stmt = db.prepare('SELECt * from sales ORDER BY id DESC')
-  return stmt.all() as SaleRow[]
+  return stmt.all() as Sale[]
+}
+
+/**
+ * void sale
+ */
+export const voidSaleTransaction = (saleId: number): boolean => {
+  const execute = db.transaction(() => {
+    const sale = db.prepare('SELECT status, items_json FROM sales WHERE id = ?').get(saleId)
+
+    if (!sale) throw new Error('Order not found')
+    if (sale.status === 'VOID') throw new Error('Order is already voided')
+
+    const items = JSON.parse(sale.items_json)
+
+    db.prepare("UPDATE sales SET status = 'VOID' WHERE id = ?").run(saleId)
+
+    const updateStockStmt = db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?')
+    for (const item of items) {
+      updateStockStmt.run(item.quantity, item.id)
+    }
+
+    return true
+  })
+
+  return execute()
 }

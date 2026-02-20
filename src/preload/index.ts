@@ -7,13 +7,14 @@ const api = {
   getAllProducts: () => ipcRenderer.invoke('get-all-products'),
   deleteProduct: (id: number) => ipcRenderer.invoke('delete-product', id),
   updateProduct: (product) => ipcRenderer.invoke('update-product', product),
-  createSale: (carItems) => ipcRenderer.invoke('create-sale', carItems),
+  createSale: (carItems, discount) => ipcRenderer.invoke('create-sale', carItems, discount),
   getSalesAnalytics: () => ipcRenderer.invoke('get-sale-analytics'),
   getAllSales: () => ipcRenderer.invoke('get-all-sales'),
   printReceipt: (data) => ipcRenderer.invoke('print-receipt', data),
   saveBarcode: (data) => ipcRenderer.invoke('save-barcode-image', data),
   getProductsPaginated: (params: { page: number; pageSize: number; searchItem: string }) =>
-    ipcRenderer.invoke('getProductsPaginated', params)
+    ipcRenderer.invoke('getProductsPaginated', params),
+  voidSale: (saleId) => ipcRenderer.invoke('void-sale', saleId)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -1,6 +1,6 @@
 //import { promises } from 'dns'
 import { useState, useEffect, useCallback } from 'react'
-import { Product } from './types'
+import { Product } from '../../common/types'
 import Inventory from './components/Inventory'
 import Cashier from './components/Cashier'
 import Dashboard from './components/Dashboard'

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Product, CartItem } from '../types'
+import { Product, CartItem } from '../../../common/types'
 
 interface CashierProps {
   products: Product[]
@@ -57,9 +57,9 @@ export default function Cashier({ products, onRefresh }: CashierProps): React.JS
 
         if (shouldPrint) {
           const printData = {
-            id: Date.now().toString().slice(-6),
+            id: res.saleId.toString(),
             items: cart,
-            discount: discount,
+            discount: discount || undefined,
             total: finalTotal,
             time: new Date().toLocaleString('en-US')
           }

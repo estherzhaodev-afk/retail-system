@@ -3,12 +3,21 @@ export interface Product {
   name: string
   price: number
   stock: number
-  detail: string
+  detail?: string
   barcode: string
 }
 
-export interface CartItem extends Product {
+export interface CartItem {
+  id: number
+  name: string
+  price: number
   quantity: number
+}
+
+export interface AnalyticsResult {
+  todayRevenue: number
+  todayOrders: number
+  recentSales: Sale[]
 }
 
 export interface Sale {
@@ -18,6 +27,7 @@ export interface Sale {
     type: 'percent' | 'fixed'
     value: number
   }
+  status: 'COMPLETED' | 'VOID'
   items_json: string
   created_at: string
 }

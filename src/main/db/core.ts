@@ -2,22 +2,6 @@ import Database from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
 
-export interface Product {
-  id: number
-  name: string
-  price: number
-  stock: number
-  detail?: string
-  barcode: string
-}
-
-export interface CartItem {
-  id: number
-  name: string
-  price: number
-  quantity: number
-}
-
 //connect database
 const dbPath = path.join(app.getPath('desktop'), 'pos-test.db')
 export const db = new Database(dbPath, { verbose: console.log })
@@ -46,7 +30,8 @@ export function initDB(): void {
       total_price INTEGER NOT NULL,
       items_json TEXT NOT NULL,
       discount_value REAL DEFAULT 0,
-      discount_type TEXT,
+      discount_type TEXT, 
+      status TEXT DEFAULT 'COMPLETED',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `)

@@ -15,7 +15,10 @@ import {
   updateProduct,
   createSale,
   getSalesAnalytics,
-  getAllSales
+  getAllSales,
+  getProductsPaginated,
+  getProductsCount,
+  voidSaleTransaction
 } from './db'
 
 function createWindow(): void {
@@ -117,11 +120,11 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('create-sale', (_event, cartItems) => {
+  ipcMain.handle('create-sale', (_event, cartItems, discount) => {
     console.log('Check out', cartItems.length, 'products')
     try {
-      createSale(cartItems)
-      return { success: true }
+      const res = createSale(cartItems, discount)
+      return { success: true, saleId: res.saleId }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       return { success: false, error: message }
@@ -152,18 +155,8 @@ app.whenReady().then(() => {
     const { page, pageSize, searchItem } = data
 
     try {
-      const allProducts = getAllProducts()
-
-      const filtered = allProducts.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchItem.toLowerCase()) || p.barcode.includes(searchItem)
-      )
-
-      const total = filtered.length
-      const start = (page - 1) * pageSize
-      const end = start + pageSize
-      const products = filtered.slice(start, end)
-
+      const products = getProductsPaginated(page, pageSize, searchItem)
+      const total = getProductsCount(searchItem)
       return { success: true, products, total }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error'
@@ -318,6 +311,17 @@ app.whenReady().then(() => {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       return { success: false, error: message }
+    }
+  })
+
+  ipcMain.handle('void-sale', async (_event, saleId) => {
+    try {
+      voidSaleTransaction(saleId)
+      console.log(`Order #${saleId} voided successfully.`)
+      return { success: true }
+    } catch (err) {
+      console.error('Void failed:', err)
+      return { success: false, error: 'Database error during void' }
     }
   })
 
